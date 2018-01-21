@@ -17,12 +17,8 @@ public interface DispositivoService {
     @GET("dispositivos")
     Call<List<Dispositivo>> list();
 
-//    @POST("dispositivos")
-//    Call<Integer> add(@Body Dispositivo dispositivo);
 
     @PUT("dispositivos")
-    Call<ResponseBody> listen(@Body Dispositivo dispositivo);
+    Call<Void> listen(@Body Dispositivo dispositivo);
 
-//    @DELETE("dispositivos/{port}")
-//    Call<ResponseBody> delete(@Path("port") Integer puerto);
 }

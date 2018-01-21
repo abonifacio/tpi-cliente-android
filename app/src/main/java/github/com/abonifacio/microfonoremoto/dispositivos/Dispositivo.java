@@ -9,6 +9,10 @@ public class Dispositivo {
     private String nombre;
     private String ip;
     private Integer puerto;
+    private Integer sampleRate;
+    private Integer sampleSize;
+    private String mac;
+    private Boolean stereo;
     private int status;
 
     public final static int ERROR = 1;
@@ -46,5 +50,41 @@ public class Dispositivo {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public Integer getSampleRate() {
+        return sampleRate;
+    }
+
+    public void setSampleRate(Integer sampleRate) {
+        this.sampleRate = sampleRate;
+    }
+
+    public Integer getSampleSize() {
+        return sampleSize;
+    }
+
+    public void setSampleSize(Integer sampleSize) {
+        this.sampleSize = sampleSize;
+    }
+
+    public String getMac() {
+        return mac;
+    }
+
+    public void setMac(String mac) {
+        this.mac = mac;
+    }
+
+    public Boolean getStereo() {
+        return stereo;
+    }
+
+    public void setStereo(Boolean stereo) {
+        this.stereo = stereo;
+    }
+
+    public boolean isStereo(){
+        return this.stereo!=null && this.stereo;
     }
 }

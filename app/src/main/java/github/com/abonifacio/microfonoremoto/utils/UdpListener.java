@@ -12,6 +12,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 import github.com.abonifacio.microfonoremoto.MicApplication;
+import github.com.abonifacio.microfonoremoto.dispositivos.Dispositivo;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -25,9 +26,14 @@ public class UdpListener extends IntentService {
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
     private static final String ACTION_START_LISTENING = "github.com.abonifacio.microfonoremoto.action.START_LISTENING";
     private static final String EXTRA_PORT = "github.com.abonifacio.microfonoremoto.extra.PORT";
+    private static final String EXTRA_SAMPLE_RATE = "github.com.abonifacio.microfonoremoto.extra.SAMPLE_RATE";
+    private static final String EXTRA_SAMPLE_SIZE = "github.com.abonifacio.microfonoremoto.extra.SAMPLE_SIZE";
+    private static final String EXTRA_CHANNELS = "github.com.abonifacio.microfonoremoto.extra.CHANNELS";
 
     private static DatagramSocket datagramSocket;
     private static boolean running = false;
+    private static String current = null;
+    private static AudioTrack audioTrack;
 
     public UdpListener() {
         super("UdpListener");
@@ -40,10 +46,23 @@ public class UdpListener extends IntentService {
      *
      * @see IntentService
      */
-    public static void startListening(Integer puerto) {
+    public static void startListening(Dispositivo item){
+//            Integer puerto,Integer sampleRate, Integer sampleSize, Boolean stereo) {
         Intent intent = new Intent(MicApplication.getAppContext(), UdpListener.class);
         intent.setAction(ACTION_START_LISTENING);
-        intent.putExtra(EXTRA_PORT,puerto);
+        intent.putExtra(EXTRA_PORT,item.getPuerto());
+        intent.putExtra(EXTRA_SAMPLE_RATE,item.getSampleRate());
+        if(item.isStereo()){
+            intent.putExtra(EXTRA_CHANNELS,AudioFormat.CHANNEL_OUT_STEREO);
+        }else{
+            intent.putExtra(EXTRA_CHANNELS,AudioFormat.CHANNEL_OUT_MONO);
+        }
+        if(item.getSampleSize()==8){
+            intent.putExtra(EXTRA_SAMPLE_SIZE,AudioFormat.ENCODING_PCM_8BIT);
+        }else{
+            intent.putExtra(EXTRA_SAMPLE_SIZE,AudioFormat.ENCODING_PCM_16BIT);
+        }
+        current = item.getMac();
         MicApplication.getAppContext().startService(intent);
     }
 
@@ -53,9 +72,10 @@ public class UdpListener extends IntentService {
 
     public static void stopListening(){
         UdpListener.running = false;
-        if(datagramSocket!=null && !datagramSocket.isClosed()){
-            datagramSocket.close();
-        }
+        current = null;
+        try{
+            audioTrack.pause();
+        }catch (IllegalStateException e){}
     }
 
 
@@ -64,9 +84,12 @@ public class UdpListener extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_START_LISTENING.equals(action)) {
-                 Integer port = intent.getIntExtra(EXTRA_PORT,0);
+                int port = intent.getIntExtra(EXTRA_PORT,0);
+                int sampleRate = intent.getIntExtra(EXTRA_SAMPLE_RATE,AudioFormat.ENCODING_PCM_8BIT);
+                int sampleSize = intent.getIntExtra(EXTRA_SAMPLE_SIZE,8000);
+                int channels = intent.getIntExtra(EXTRA_CHANNELS,AudioFormat.CHANNEL_OUT_MONO);
                 try {
-                    handleActionStartListening(port);
+                    handleActionStartListening(port,sampleRate,sampleSize,channels);
                 } catch (IOException e) {
                     e.printStackTrace();
                     stopListening();
@@ -79,35 +102,51 @@ public class UdpListener extends IntentService {
      * Handle action Foo in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionStartListening(Integer port) throws IOException {
+    private void handleActionStartListening(Integer port,int sampleRate,int sampleSize,int channel) throws IOException {
 
         datagramSocket = new DatagramSocket(port);
         datagramSocket.setSoTimeout(10000);
         datagramSocket.setReuseAddress(true);
         running = true;
-        byte[] buffer = new byte[64512];
+        byte[] buffer = new byte[Conf.BUFFER_SIZE];
         DatagramPacket datagramPacket = new DatagramPacket(buffer,buffer.length);
 
-        AudioTrack audio = new AudioTrack.Builder()
+        audioTrack = new AudioTrack.Builder()
                 .setAudioAttributes(new AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build())
                 .setAudioFormat(new AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(44100)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                        .setEncoding(sampleSize)
+                        .setSampleRate(sampleRate)
+                        .setChannelMask(channel)
                         .build())
                 .setBufferSizeInBytes(64512)
                 .build();
-        audio.setVolume(1.0f);
+        audioTrack.setVolume(1.0f);
 
         while(running){
             datagramSocket.receive(datagramPacket);
-            audio.write(buffer,0,buffer.length);
-            audio.play();
+            audioTrack.write(buffer,0,buffer.length);
+            if(running){
+                audioTrack.play();
+            }
             Log.d("Paquete recibido",new String(buffer,0,16));
         }
+        if(audioTrack!=null){
+            audioTrack.flush();
+            audioTrack.stop();
+            audioTrack.release();
+            audioTrack = null;
+        }
+        if(datagramSocket!=null && !datagramSocket.isClosed()){
+            datagramSocket.close();
+        }
+
+    }
+
+    public static String getCurrent(){
+        return current;
     }
 
 }

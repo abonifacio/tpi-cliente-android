@@ -1,6 +1,7 @@
 package github.com.abonifacio.microfonoremoto.dispositivos;
 
 import android.graphics.Color;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -16,8 +17,8 @@ import java.util.List;
 import github.com.abonifacio.microfonoremoto.MicApplication;
 import github.com.abonifacio.microfonoremoto.R;
 import github.com.abonifacio.microfonoremoto.utils.ClienteHttp;
+import github.com.abonifacio.microfonoremoto.utils.Toaster;
 import github.com.abonifacio.microfonoremoto.utils.UdpListener;
-import okhttp3.ResponseBody;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Dispositivo}
@@ -26,13 +27,11 @@ public class DispositivoRecyclerViewAdapter extends RecyclerView.Adapter<Disposi
 
     private List<Dispositivo> mValues = new ArrayList<>();
     private final SwipeRefreshLayout refreshLayout;
-    private final DispositivoService service;
 
     public DispositivoRecyclerViewAdapter(SwipeRefreshLayout refreshLayout) {
         this.refreshLayout = refreshLayout;
         this.refreshLayout.setRefreshing(true);
         this.refreshLayout.setOnRefreshListener(this);
-        this.service = ClienteHttp.getDispositivoService();
         this.loadDispositivos();
     }
 
@@ -41,7 +40,17 @@ public class DispositivoRecyclerViewAdapter extends RecyclerView.Adapter<Disposi
         new ClienteHttp.Request<List<Dispositivo>>(new ClienteHttp.Callback<List<Dispositivo>>() {
             @Override
             public void onSuccess(List<Dispositivo> arg) {
-
+                if(UdpListener.isListening()){
+                    String current = UdpListener.getCurrent();
+                    if(current!=null){
+                        for(Dispositivo d : arg){
+                            if(current.equals(d.getMac())){
+                                d.setStatus(Dispositivo.PLAYING);
+                                break;
+                            }
+                        }
+                    }
+                }
                 mValues = arg;
                 notifyDataSetChanged();
                 refreshLayout.setRefreshing(false);
@@ -51,7 +60,7 @@ public class DispositivoRecyclerViewAdapter extends RecyclerView.Adapter<Disposi
             public void onError() {
                 refreshLayout.setRefreshing(false);
             }
-        }).execute(service.list());
+        }).execute(ClienteHttp.getDispositivoService().list());
 
     }
 
@@ -79,7 +88,7 @@ public class DispositivoRecyclerViewAdapter extends RecyclerView.Adapter<Disposi
                 break;
             case Dispositivo.LOADING:
                 holder.container.setBackgroundColor(Color.TRANSPARENT);
-                holder.actionButton.setImageResource(R.drawable.ic_compare_arrows_black_24dp);
+                holder.actionButton.setImageResource(R.drawable.ic_sync_black_24dp);
                 break;
             default: // READY
                 holder.container.setBackgroundColor(Color.TRANSPARENT);
@@ -107,34 +116,48 @@ public class DispositivoRecyclerViewAdapter extends RecyclerView.Adapter<Disposi
     public void onListFragmentInteraction(Dispositivo item,int position) {
         if(UdpListener.isListening()){
             UdpListener.stopListening();
-            if(item.getStatus()!=Dispositivo.PLAYING){
-                toggleOn(item,position,true);
-            }else{
-                item.setStatus(Dispositivo.PLAYING);
-                notifyItemChanged(position);
-                toggleOn(item,position,false);
-            }
+            setStatus(item,Dispositivo.READY,position);
+            stop(item);
         }else{
-            toggleOn(item,position,true);
+            play(item,position);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void toggleOn(final Dispositivo item, final int position,final boolean play){
-        item.setIp(MicApplication.getDeviceIp());
-        new ClienteHttp.Request<ResponseBody>(new ClienteHttp.Callback<ResponseBody>() {
+    private void play(final Dispositivo item, final int position){
+        this.toggle(item,new ClienteHttp.Callback<Void>() {
             @Override
-            public void onSuccess(ResponseBody body) {
-                if(play){
-                    UdpListener.startListening(item.getPuerto());
-                }
-                item.setStatus(play? Dispositivo.PLAYING : Dispositivo.READY);
-                notifyItemChanged(position);
+            public void onSuccess(Void emptyBody) {
+                UdpListener.startListening(item);
+                setStatus(item,Dispositivo.PLAYING,position);
             }
 
             @Override
+            public void onError() {
+                UdpListener.stopListening();
+                setStatus(item,Dispositivo.READY,position);
+            }
+        });
+    }
+
+    private void stop(final Dispositivo item){
+        this.toggle(item,new ClienteHttp.Callback<Void>() {
+            @Override
+            public void onSuccess(Void emptyBody) {
+                Toaster.show("Desuscrito correctamente", Snackbar.LENGTH_SHORT);
+            }
+            @Override
             public void onError() {}
-        }).execute(service.listen(item));
+        });
+    }
+
+    private void toggle(final Dispositivo item, ClienteHttp.Callback<Void> callback){
+        item.setIp(MicApplication.getDeviceIp());
+        new ClienteHttp.Request<Void>(callback).execute(ClienteHttp.getDispositivoService().listen(item));
+    }
+
+    private void setStatus(Dispositivo item, int status,int position){
+        item.setStatus(status);
+        notifyItemChanged(position);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

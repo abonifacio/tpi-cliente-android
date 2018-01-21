@@ -1,13 +1,10 @@
 package github.com.abonifacio.microfonoremoto.utils;
 
 import android.os.AsyncTask;
-
-import java.io.IOException;
+import android.util.Log;
 
 import github.com.abonifacio.microfonoremoto.dispositivos.DispositivoService;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -21,8 +18,9 @@ public class ClienteHttp {
     private static String ERROR_HEADER = "Error-Message";
 
     public static Retrofit build(){
+        Log.d("CONG_SERVER",Conf.SERVER_HOST);
         return new Retrofit.Builder()
-                .baseUrl(Env.SERVER_HOST)
+                .baseUrl(Conf.SERVER_HOST)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
     }
@@ -46,6 +44,7 @@ public class ClienteHttp {
             @Override
             public void onFailure(Call<T> call, Throwable t) {
                 Toaster.show("Error al acceder al servidor");
+                callback.onError();
             }
         });
     }

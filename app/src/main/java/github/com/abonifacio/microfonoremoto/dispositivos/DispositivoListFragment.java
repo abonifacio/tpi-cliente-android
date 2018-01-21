@@ -23,7 +23,6 @@ import github.com.abonifacio.microfonoremoto.utils.ClienteHttp;
  */
 public class DispositivoListFragment extends Fragment {
 
-    private DispositivoService service = ClienteHttp.getDispositivoService();
     private DispositivoRecyclerViewAdapter mAdapter = null;
 
     /**

@@ -3,9 +3,12 @@ package github.com.abonifacio.microfonoremoto;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.text.format.Formatter;
 import android.view.View;
+
+import github.com.abonifacio.microfonoremoto.utils.Conf;
 
 /**
  * Created by Augusto on 6/10/2017.
