@@ -15,7 +15,6 @@ import github.com.abonifacio.microfonoremoto.MicApplication;
 public class Toaster {
 
     public static void show(final String msg, final int duration){
-        Log.d("SNACKBAR",msg);
         MicApplication.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {

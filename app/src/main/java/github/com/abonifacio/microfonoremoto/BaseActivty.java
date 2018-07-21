@@ -51,9 +51,6 @@ public abstract class BaseActivty extends AppCompatActivity {
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
 
-        if(Conf.SERVER_HOST==null){
-            this.openConfigurationDialog();
-        }
     }
 
     protected abstract int getMainLayout();
@@ -108,7 +105,6 @@ public abstract class BaseActivty extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         String ip = et.getText().toString();
                         Conf.SERVER_HOST = ip;
-                        Log.d("SET_SERVER_IP",ip);
                         MicApplication.setThisDispositivoValues(
                                 (int) sampleRateSpinner.getSelectedItem(),
                                 (int) sampleSizeSpinner.getSelectedItem(),

@@ -18,7 +18,6 @@ public class ClienteHttp {
     private static String ERROR_HEADER = "Error-Message";
 
     public static Retrofit build(){
-        Log.d("CONG_SERVER",Conf.SERVER_HOST);
         return new Retrofit.Builder()
                 .baseUrl(Conf.SERVER_HOST)
                 .addConverterFactory(GsonConverterFactory.create())

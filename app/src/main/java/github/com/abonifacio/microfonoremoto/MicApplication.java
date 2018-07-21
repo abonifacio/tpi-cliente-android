@@ -52,7 +52,7 @@ public class MicApplication extends Application{
 
     public static void loadPreferences(){
         SharedPreferences sp = activity.getPreferences(Context.MODE_PRIVATE);
-        Conf.SERVER_HOST = sp.getString(EXTRA_SERVER_ADRESS,null);
+        Conf.SERVER_HOST = sp.getString(EXTRA_SERVER_ADRESS,Conf.SERVER_HOST);
         setThisDispositivoValues(sp.getInt(EXTRA_SAMPLE_RATE,44100),sp.getInt(EXTRA_SAMPLE_SIZE,16),sp.getBoolean(EXTRA_STEREO,true));
     }
 

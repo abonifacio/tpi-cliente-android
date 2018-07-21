@@ -115,7 +115,6 @@ public class UdpListener extends IntentService {
 //            datagramSocket.setBroadcast(true);
             datagramSocket.bind(new InetSocketAddress(MicApplication.getDeviceIp(),port));
         }catch (Exception e){
-            Log.e("DSEX",e.getMessage());
             running = false;
             return;
         }
@@ -142,7 +141,6 @@ public class UdpListener extends IntentService {
             if(running){
                 audioTrack.play();
             }
-            Log.d("Paquete recibido",new String(buffer,0,16));
         }
         if(audioTrack!=null){
             audioTrack.flush();
