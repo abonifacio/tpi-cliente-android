@@ -4,6 +4,11 @@
 
     <!-- "Mark Favorite", should appear as action button if possible -->
     <item
+        android:id="@+id/action_record"
+        android:icon="@drawable/ic_microphone_black_24dp"
+        android:title="Grabar"
+        app:showAsAction="always"/>
+    <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_compare_arrows_black_24dp"
         android:title="Configuracion"

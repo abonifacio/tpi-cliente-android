@@ -44,6 +44,7 @@ public class ClienteHttp {
             @Override
             public void onFailure(Call<T> call, Throwable t) {
                 Toaster.show("Error al acceder al servidor");
+                t.printStackTrace();
                 callback.onError();
             }
         });

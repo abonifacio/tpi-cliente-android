@@ -18,6 +18,7 @@ public class MainActivity extends BaseActivty {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        MicApplication.loadPreferences();
         this.loadFragement();
     }
 

@@ -87,4 +87,5 @@ public class Dispositivo {
     public boolean isStereo(){
         return this.stereo!=null && this.stereo;
     }
+
 }

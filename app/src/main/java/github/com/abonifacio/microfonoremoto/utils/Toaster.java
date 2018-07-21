@@ -31,7 +31,8 @@ public class Toaster {
         });
     }
 
-    public static void show(final String msg){
+    public static void show(String msg){
+        if(msg==null) msg = "Error desconocido";
         show(msg,Snackbar.LENGTH_INDEFINITE);
     }
 }

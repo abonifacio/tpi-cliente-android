@@ -152,7 +152,7 @@ public class DispositivoRecyclerViewAdapter extends RecyclerView.Adapter<Disposi
 
     private void toggle(final Dispositivo item, ClienteHttp.Callback<Void> callback){
         item.setIp(MicApplication.getDeviceIp());
-        new ClienteHttp.Request<Void>(callback).execute(ClienteHttp.getDispositivoService().listen(item));
+        new ClienteHttp.Request<>(callback).execute(ClienteHttp.getDispositivoService().listen(item));
     }
 
     private void setStatus(Dispositivo item, int status,int position){

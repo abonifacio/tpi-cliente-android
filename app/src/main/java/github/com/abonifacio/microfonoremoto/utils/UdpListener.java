@@ -10,6 +10,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
 
 import github.com.abonifacio.microfonoremoto.MicApplication;
 import github.com.abonifacio.microfonoremoto.dispositivos.Dispositivo;
@@ -74,7 +75,9 @@ public class UdpListener extends IntentService {
         UdpListener.running = false;
         current = null;
         try{
-            audioTrack.pause();
+            if(audioTrack!=null){
+                audioTrack.pause();
+            }
         }catch (IllegalStateException e){}
     }
 
@@ -85,8 +88,8 @@ public class UdpListener extends IntentService {
             final String action = intent.getAction();
             if (ACTION_START_LISTENING.equals(action)) {
                 int port = intent.getIntExtra(EXTRA_PORT,0);
-                int sampleRate = intent.getIntExtra(EXTRA_SAMPLE_RATE,AudioFormat.ENCODING_PCM_8BIT);
-                int sampleSize = intent.getIntExtra(EXTRA_SAMPLE_SIZE,8000);
+                int sampleRate = intent.getIntExtra(EXTRA_SAMPLE_RATE,8000);
+                int sampleSize = intent.getIntExtra(EXTRA_SAMPLE_SIZE,AudioFormat.ENCODING_PCM_8BIT);
                 int channels = intent.getIntExtra(EXTRA_CHANNELS,AudioFormat.CHANNEL_OUT_MONO);
                 try {
                     handleActionStartListening(port,sampleRate,sampleSize,channels);
@@ -104,10 +107,18 @@ public class UdpListener extends IntentService {
      */
     private void handleActionStartListening(Integer port,int sampleRate,int sampleSize,int channel) throws IOException {
 
-        datagramSocket = new DatagramSocket(port);
-        datagramSocket.setSoTimeout(10000);
-        datagramSocket.setReuseAddress(true);
         running = true;
+        try{
+            datagramSocket = new DatagramSocket(null);
+            datagramSocket.setSoTimeout(10000);
+            datagramSocket.setReuseAddress(true);
+//            datagramSocket.setBroadcast(true);
+            datagramSocket.bind(new InetSocketAddress(MicApplication.getDeviceIp(),port));
+        }catch (Exception e){
+            Log.e("DSEX",e.getMessage());
+            running = false;
+            return;
+        }
         byte[] buffer = new byte[Conf.BUFFER_SIZE];
         DatagramPacket datagramPacket = new DatagramPacket(buffer,buffer.length);
 
