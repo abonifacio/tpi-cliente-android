@@ -131,13 +131,13 @@ public class UdpListener extends IntentService {
                         .setSampleRate(sampleRate)
                         .setChannelMask(channel)
                         .build())
-                .setBufferSizeInBytes(64512)
+                .setBufferSizeInBytes(Conf.BUFFER_SIZE)
                 .build();
         audioTrack.setVolume(1.0f);
 
         while(running){
             datagramSocket.receive(datagramPacket);
-            audioTrack.write(buffer,0,buffer.length);
+            audioTrack.write(buffer,0,datagramPacket.getLength());
             if(running){
                 audioTrack.play();
             }
